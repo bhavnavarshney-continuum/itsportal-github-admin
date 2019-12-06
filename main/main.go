@@ -38,31 +38,36 @@ type name struct {
 }
 
 func getUsersFromOrg(organisation string) map[int]users {
-	client := &http.Client{}
 	result := make(map[int]users)
+	funcName := "getUsersFromOrg"
 	for i := 1; i <= 4; i++ {
 		user := users{}
 		url := fmt.Sprintf("https://api.github.com/orgs/"+organisation+"/members?page=%d&per_page=362", i)
-		request, err := http.NewRequest(http.MethodGet, url, nil)
+		body := sendRequest(funcName, url)
+		err := json.Unmarshal(body, &user.User)
 		if err != nil {
-			log.Fatalf("getUsersFromOrg : Error in fetching Username. Reason : %v", err)
-		}
-		request.Header.Set("Authorization", "token 3477e10a3b8d35261184a97a8c848dfa2fa5a02d")
-		resp, err := client.Do(request)
-		body, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		if err != nil {
-			log.Fatalf("getUsersFromOrg : Error in Reading Response Body. Reason : %v", err)
-		}
-		err = json.Unmarshal(body, &user.User)
-		if err != nil {
-			log.Fatalf("getUsersFromOrg : Error in Unmarsalling. Reason : %v", err)
+			log.Fatalf(funcName, " : Error in Unmarsalling. Reason : %v", err)
 		}
 		result[i] = user
 	}
 	return result
 }
 
+func sendRequest(funcName, url string) []byte {
+	client := &http.Client{}
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Fatalf(funcName, " : Error in fetching Username. Reason : %v", err)
+	}
+	request.Header.Set("Authorization", "token 3477e10a3b8d35261184a97a8c848dfa2fa5a02d")
+	resp, err := client.Do(request)
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Fatalf(funcName, " : Error in Reading Response Body. Reason : %v", err)
+	}
+	return body
+}
 func checkUsername(usernames map[int]users) {
 	fmt.Println("********** White : Contains Continuum ; Red : Does not contain Continuum in the Username ********")
 	for i := 1; i <= len(usernames); i++ {
@@ -78,27 +83,15 @@ func checkUsername(usernames map[int]users) {
 
 func checkEmptyFullName(usernames map[int]users) {
 	fmt.Println("********** White : Updated Full Name ; Red : Requires Full Name ********")
+	funcName := "checkEmptyFullName"
 	for i := 0; i < len(usernames); i++ {
 		for j := 0; j < len(usernames[i].User); j++ {
-			client := &http.Client{}
 			names := name{}
 			url := fmt.Sprintf("https://api.github.com/users/%s", usernames[i].User[j].Username)
-			request, err := http.NewRequest(http.MethodGet, url, nil)
+			body := sendRequest(funcName, url)
+			err := json.Unmarshal(body, &names)
 			if err != nil {
-				log.Fatalf("checkEmptyFullName : Error in fetching user's name. Reason : %v", err)
-			}
-			request.Header.Set("Authorization", "token 3477e10a3b8d35261184a97a8c848dfa2fa5a02d")
-			resp, err := client.Do(request)
-			if err != nil {
-				log.Fatalf("checkEmptyFullName : Error in request. Reason : %v", err)
-			}
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatalf("checkEmptyFullName : Error in Reading Body. Reason : %v", err)
-			}
-			err = json.Unmarshal(body, &names)
-			if err != nil {
-				log.Fatalf("checkEmptyFullName : Error in Unmarshalling.Reason:%v", err)
+				log.Fatalf(funcName, " : Error in Unmarshalling.Reason:%v", err)
 			}
 			if names.CName == "" {
 				color.Red(usernames[i].User[j].Username)
