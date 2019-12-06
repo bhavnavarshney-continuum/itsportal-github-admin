@@ -59,7 +59,7 @@ func sendRequest(funcName, url string) []byte {
 	if err != nil {
 		log.Fatalf(funcName, " : Error in fetching Username. Reason : %v", err)
 	}
-	request.Header.Set("Authorization", "token 3477e10a3b8d35261184a97a8c848dfa2fa5a02d")
+	request.Header.Set("Authorization", "token <Your TOKEN here>")
 	resp, err := client.Do(request)
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
